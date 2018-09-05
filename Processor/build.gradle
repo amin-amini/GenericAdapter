@@ -1,0 +1,15 @@
+apply plugin: 'java-library'
+apply plugin: 'maven'
+group = 'com.github.amin-amini'
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation 'com.google.guava:guava:21.0'
+    implementation 'com.squareup:javapoet:1.8.0'
+
+    implementation project(":Annotations")
+}
+
+sourceCompatibility = "1.7"
+targetCompatibility = "1.7"

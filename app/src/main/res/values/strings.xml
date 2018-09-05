@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">GenericAdapter</string>
+    <string name="foo">Foo</string>
+    <string name="bar">Bar</string>
+</resources>
