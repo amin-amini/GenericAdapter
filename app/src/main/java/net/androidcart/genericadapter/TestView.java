@@ -54,8 +54,8 @@ public class TestView extends RelativeLayout implements GenericAdapterView<TestM
     }
 
     @Override
-    public void onBind(TestModel model) {
-        binding.foo.setText(model.getA());
+    public void onBind(TestModel model, int position) {
+        binding.foo.setText(model.getA() + " position : " + position);
         binding.bar.setText(model.getB());
     }
 }

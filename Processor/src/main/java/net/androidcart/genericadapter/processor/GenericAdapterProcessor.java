@@ -311,7 +311,7 @@ public class GenericAdapterProcessor extends AbstractProcessor {
             TypeName model = models.get(view);
             String name = view.getSimpleName().toString();
             ans.addCode("case $L:\n" , name);
-            ans.addStatement("(($LHolder) holder).update(($L) section.getData())", name, model.toString());
+            ans.addStatement("(($LHolder) holder).update(($L) section.getData(), position)", name, model.toString());
             ans.addStatement("break");
         }
         ans.endControlFlow();
@@ -351,7 +351,8 @@ public class GenericAdapterProcessor extends AbstractProcessor {
                     .build());
             vh.addMethod(MethodSpec.methodBuilder("update")
                     .addParameter(model, "model")
-                    .addStatement("view.onBind(model)")
+                    .addParameter(TypeName.INT, "position")
+                    .addStatement("view.onBind(model, position)")
                     .build());
             adapterClass.addType(vh.build());
         }
