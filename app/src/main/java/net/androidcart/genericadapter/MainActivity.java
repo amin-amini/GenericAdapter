@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
         models3.add(new TestModel("Model_3 foo" , "Model_3 bar"));
 
         GenericRecyclerAdapter adapter = new GenericRecyclerAdapter();
-        adapter.addSections(Section.TestView(models1));
+        adapter.addSections(Section.TestView(models1, MainActivity.this));
         adapter.addSections(Section.TestView2(models2));
         adapter.addSections(Section.TestView3(models3));
 

@@ -5,5 +5,5 @@ package net.androidcart.genericadapter.annotations;
  */
 
 public interface GenericAdapterView<Model> {
-    void onBind(Model model, int position);
+    void onBind(Model model, int position, Object extraObject);
 }

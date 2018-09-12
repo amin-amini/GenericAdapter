@@ -88,8 +88,10 @@ public class GenericAdapterProcessor extends AbstractProcessor {
         section.addMethod(MethodSpec.constructorBuilder()
                 .addParameter(sectionTypeClassName, "type")
                 .addParameter(Object.class, "data")
+                .addParameter(Object.class, "extraObject")
                 .addStatement("this.type = type")
                 .addStatement("this.data = data")
+                .addStatement("this.extraObject = extraObject")
                 .build()
         );
 
@@ -119,6 +121,19 @@ public class GenericAdapterProcessor extends AbstractProcessor {
                 .addStatement("this.data = data")
                 .build());
 
+
+        section.addMethod(MethodSpec.methodBuilder("getExtraObject")
+                .addModifiers(Modifier.PUBLIC)
+                .addStatement("return extraObject")
+                .returns(Object.class)
+                .build());
+
+        section.addMethod(MethodSpec.methodBuilder("setExtraObject")
+                .addModifiers(Modifier.PUBLIC)
+                .addParameter(Object.class, "extraObject")
+                .addStatement("this.extraObject = extraObject")
+                .build());
+
         for ( TypeElement view : models.keySet() ){
             TypeName model = models.get(view);
             String name = view.getSimpleName().toString();
@@ -127,16 +142,30 @@ public class GenericAdapterProcessor extends AbstractProcessor {
                     .returns(sectionClassName)
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                     .addParameter(model, "data")
-                    .addStatement("return new Section(SectionType."+name+" , data)")
+                    .addStatement("return " + name + "(data, null)")
+                    .build());
+            section.addMethod(MethodSpec.methodBuilder(name)
+                    .returns(sectionClassName)
+                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                    .addParameter(model, "data")
+                    .addParameter(Object.class, "extraObject")
+                    .addStatement("return new Section(SectionType."+name+" , data, extraObject)")
                     .build());
 
             section.addMethod(MethodSpec.methodBuilder(name)
                     .returns(sectionArrayList)
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                     .addParameter(ParameterizedTypeName.get(ClassName.get("java.util" , "Collection"), model), "data")
+                    .addStatement("return " + name + "(data, null)")
+                    .build());
+            section.addMethod(MethodSpec.methodBuilder(name)
+                    .returns(sectionArrayList)
+                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                    .addParameter(ParameterizedTypeName.get(ClassName.get("java.util" , "Collection"), model), "data")
+                    .addParameter(Object.class, "extraObject")
                     .addStatement("ArrayList<Section> ans = new ArrayList<>()")
                     .beginControlFlow("for ("+model.toString()+ " item : data)")
-                        .addStatement("ans.add(new Section(SectionType."+name+" , item))")
+                        .addStatement("ans.add(new Section(SectionType."+name+" , item, extraObject))")
                     .endControlFlow()
                     .addStatement("return ans")
                     .build());
@@ -311,7 +340,7 @@ public class GenericAdapterProcessor extends AbstractProcessor {
             TypeName model = models.get(view);
             String name = view.getSimpleName().toString();
             ans.addCode("case $L:\n" , name);
-            ans.addStatement("(($LHolder) holder).update(($L) section.getData(), position)", name, model.toString());
+            ans.addStatement("(($LHolder) holder).update(($L) section.getData(), position, section.getExtraObject())", name, model.toString());
             ans.addStatement("break");
         }
         ans.endControlFlow();
@@ -352,7 +381,8 @@ public class GenericAdapterProcessor extends AbstractProcessor {
             vh.addMethod(MethodSpec.methodBuilder("update")
                     .addParameter(model, "model")
                     .addParameter(TypeName.INT, "position")
-                    .addStatement("view.onBind(model, position)")
+                    .addParameter(Object.class, "extraObject")
+                    .addStatement("view.onBind(model, position, extraObject)")
                     .build());
             adapterClass.addType(vh.build());
         }
@@ -377,7 +407,8 @@ public class GenericAdapterProcessor extends AbstractProcessor {
         TypeSpec.Builder section = TypeSpec.classBuilder(sectionClassName)
                 .addModifiers(Modifier.PUBLIC)
                 .addField(sectionTypeClassName, "type")
-                .addField(Object.class, "data");
+                .addField(Object.class, "data")
+                .addField(Object.class, "extraObject");
 
         HashMap<TypeElement, String> packages = new HashMap<>();
         HashMap<TypeElement, TypeName> models = new HashMap<>();
