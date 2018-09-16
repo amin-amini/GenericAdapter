@@ -50,6 +50,8 @@ public class TestView3 extends RelativeLayout implements GenericAdapterView<Test
 
         binding = DataBindingUtil.inflate(
                 inflater, R.layout.view_test3, this, true);
+
+
     }
 
     @Override

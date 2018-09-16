@@ -1,5 +1,6 @@
 package net.androidcart.genericadapter;
 
+import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -34,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
         adapter.addSections(Section.TestView(models1, MainActivity.this));
         adapter.addSections(Section.TestView2(models2));
         adapter.addSections(Section.TestView3(models3));
+
+        adapter.setTestView2Provider( (ctx) -> new TestView2(MainActivity.this) );
 
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this,LinearLayoutManager.VERTICAL, false));

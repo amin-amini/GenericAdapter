@@ -13,7 +13,6 @@ import net.androidcart.genericadapter.annotations.GenericAdapter;
 import net.androidcart.genericadapter.annotations.GenericAdapterView;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -49,15 +48,36 @@ public class GenericAdapterProcessor extends AbstractProcessor {
         elements = pe.getElementUtils();
     }
 
+    private String getLowerCamel(String in){
+        String typeCamel = in;
+        if ( typeCamel.length()>1 ) {
+            typeCamel = typeCamel.substring(0, 1).toLowerCase() + typeCamel.substring(1);
+        } else {
+            typeCamel = typeCamel.toLowerCase();
+        }
+        return typeCamel;
+    }
+    private String getUpperCamel(String in){
+        String typeCamel = in;
+        if ( typeCamel.length()>1 ) {
+            typeCamel = typeCamel.substring(0, 1).toUpperCase() + typeCamel.substring(1);
+        } else {
+            typeCamel = typeCamel.toUpperCase();
+        }
+        return typeCamel;
+    }
+
 
     private ClassName sectionTypeClassName = ClassName.get(PN, "SectionType");
     private ClassName sectionClassName = ClassName.get(PN, "Section");
+    private ClassName providersClassName = ClassName.get(PN, "Providers");
     private ParameterizedTypeName sectionArrayList = ParameterizedTypeName.get(ClassName.get("java.util","ArrayList"), sectionClassName);
 
     private ClassName adapter = ClassName.get("android.support.v7.widget.RecyclerView", "Adapter");
     private ClassName viewHolder = ClassName.get("android.support.v7.widget.RecyclerView", "ViewHolder");
 
     private ClassName viewGroup = ClassName.get("android.view" , "ViewGroup");
+    private ClassName context = ClassName.get("android.content" , "Context");
 
     private void log(String str){
         messager.printMessage(Diagnostic.Kind.NOTE, "GenericAdapter: " + str);
@@ -138,6 +158,7 @@ public class GenericAdapterProcessor extends AbstractProcessor {
             TypeName model = models.get(view);
             String name = view.getSimpleName().toString();
 
+
             section.addMethod(MethodSpec.methodBuilder(name)
                     .returns(sectionClassName)
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
@@ -171,6 +192,38 @@ public class GenericAdapterProcessor extends AbstractProcessor {
                     .build());
 
 
+        }
+    }
+
+    private void addProvidersFunctionsAndFields(TypeSpec.Builder adapterClass, TypeSpec.Builder providers, HashMap<TypeElement, TypeName> models){
+
+        for ( TypeElement view : models.keySet() ){
+            TypeName model = models.get(view);
+            String name = view.getSimpleName().toString();
+            TypeName viewType = ClassName.get(view.asType());
+
+            TypeSpec.Builder providerBuilder = TypeSpec.interfaceBuilder(name + "Provider")
+                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                    ;
+
+            providerBuilder.addMethod(MethodSpec.methodBuilder("provide")
+                    .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+                    .returns(viewType)
+                    .addParameter(context, "ctx")
+                    .build()
+            );
+
+            providers.addType(providerBuilder.build());
+
+            ClassName providerCN = ClassName.get(PN + ".Providers", name + "Provider" );
+            String providerObject = getLowerCamel(name) + "Provider";
+            adapterClass.addField(providerCN, providerObject, Modifier.PRIVATE);
+
+            adapterClass.addMethod(MethodSpec.methodBuilder("set" + getUpperCamel(name) + "Provider" )
+                    .addModifiers(Modifier.PUBLIC)
+                    .addParameter(providerCN, providerObject)
+                    .addStatement("this.$L = $L" , providerObject, providerObject)
+                    .build());
         }
     }
 
@@ -313,7 +366,14 @@ public class GenericAdapterProcessor extends AbstractProcessor {
             TypeName model = models.get(view);
             String name = view.getSimpleName().toString();
             ans.addCode("case $L:\n" , name);
-            ans.addStatement("return new $LHolder(new $L(parent.getContext()))", name, name);
+
+            String myProvider = getLowerCamel(name) + "Provider";
+            ans.beginControlFlow("if ($L != null )", myProvider);
+                ans.addStatement("return new $LHolder($L.provide(parent.getContext()))", name , myProvider);
+            ans.endControlFlow();
+            ans.beginControlFlow("else");
+                ans.addStatement("return new $LHolder(new $L(parent.getContext()))", name, name);
+            ans.endControlFlow();
         }
         ans.endControlFlow();
         ans.addStatement("return null");
@@ -340,7 +400,7 @@ public class GenericAdapterProcessor extends AbstractProcessor {
             TypeName model = models.get(view);
             String name = view.getSimpleName().toString();
             ans.addCode("case $L:\n" , name);
-            ans.addStatement("(($LHolder) holder).update(($L) section.getData(), position, section.getExtraObject())", name, model.toString());
+            ans.addStatement("(($LHolder) holder).view.onBind(($L) section.getData(), position, section.getExtraObject())", name, model.toString());
             ans.addStatement("break");
         }
         ans.endControlFlow();
@@ -378,12 +438,6 @@ public class GenericAdapterProcessor extends AbstractProcessor {
                     .addStatement("super(view)")
                     .addStatement("this.view = view")
                     .build());
-            vh.addMethod(MethodSpec.methodBuilder("update")
-                    .addParameter(model, "model")
-                    .addParameter(TypeName.INT, "position")
-                    .addParameter(Object.class, "extraObject")
-                    .addStatement("view.onBind(model, position, extraObject)")
-                    .build());
             adapterClass.addType(vh.build());
         }
     }
@@ -403,7 +457,10 @@ public class GenericAdapterProcessor extends AbstractProcessor {
         
         TypeSpec.Builder sectionType = TypeSpec.enumBuilder(sectionTypeClassName)
                 .addModifiers(Modifier.PUBLIC);
-        
+
+        TypeSpec.Builder providers = TypeSpec.classBuilder(providersClassName)
+                .addModifiers(Modifier.PUBLIC);
+
         TypeSpec.Builder section = TypeSpec.classBuilder(sectionClassName)
                 .addModifiers(Modifier.PUBLIC)
                 .addField(sectionTypeClassName, "type")
@@ -443,6 +500,7 @@ public class GenericAdapterProcessor extends AbstractProcessor {
 
         fillSectionType(sectionType, packages);
         addSectionMainFunctions(section, models);
+        addProvidersFunctionsAndFields(adapterClass, providers, models);
 
         adapterClass.addField(sectionArrayList, "sections" , Modifier.PROTECTED);
 
@@ -473,6 +531,9 @@ public class GenericAdapterProcessor extends AbstractProcessor {
                     .build()
                     .writeTo(filer);
             JavaFile.builder(PN, section.build())
+                    .build()
+                    .writeTo(filer);
+            JavaFile.builder(PN, providers.build())
                     .build()
                     .writeTo(filer);
         } catch (IOException e) {

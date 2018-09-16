@@ -20,6 +20,14 @@ import net.androidcart.genericadapter.databinding.ViewTestBinding;
 
 @GenericAdapter
 public class TestView2 extends RelativeLayout implements GenericAdapterView<TestModel> {
+
+    MainActivity activity;
+    public TestView2(MainActivity activity){
+        super(activity);
+        this.activity = activity;
+        init();
+    }
+
     public TestView2(Context context) {
         super(context);
         init();
@@ -55,6 +63,6 @@ public class TestView2 extends RelativeLayout implements GenericAdapterView<Test
     @Override
     public void onBind(TestModel model, int position, Object extraObject) {
         binding.foo.setText(model.getA() + " position : " + position);
-        binding.bar.setText(model.getB());
+        binding.bar.setText(model.getB() + " activityClass : " + activity.getClass());
     }
 }
