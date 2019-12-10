@@ -275,20 +275,57 @@ public class GenericAdapterProcessor extends AbstractProcessor {
         adapterClass.addMethod(MethodSpec.methodBuilder("setSections")
                 .addParameter(sectionArrayList, "section")
                 .addStatement("this.sections = section")
+                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(Modifier.SYNCHRONIZED)
+                .build());
+        adapterClass.addMethod(MethodSpec.methodBuilder("setSectionsAndNotify")
+                .addParameter(sectionArrayList, "section")
+                .addStatement("this.sections = section")
                 .addStatement("notifyDataSetChanged()")
                 .addModifiers(Modifier.PUBLIC)
                 .addModifiers(Modifier.SYNCHRONIZED)
                 .build());
+        adapterClass.addMethod(MethodSpec.methodBuilder("setSectionsAndNotifyRange")
+                .addParameter(sectionArrayList, "section")
+                .addStatement("this.sections = section")
+                .addStatement("notifyItemRangeChanged(0, getItemCount())")
+                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(Modifier.SYNCHRONIZED)
+                .build());
+
+
 
         adapterClass.addMethod(MethodSpec.methodBuilder("addSections")
+                .addParameter(sectionArrayList, "sections")
+                .addStatement("this.sections.addAll(sections)")
+                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(Modifier.SYNCHRONIZED)
+                .build());
+        adapterClass.addMethod(MethodSpec.methodBuilder("addSectionsAndNotify")
                 .addParameter(sectionArrayList, "sections")
                 .addStatement("this.sections.addAll(sections)")
                 .addStatement("notifyDataSetChanged()")
                 .addModifiers(Modifier.PUBLIC)
                 .addModifiers(Modifier.SYNCHRONIZED)
                 .build());
+        adapterClass.addMethod(MethodSpec.methodBuilder("addSectionsAndNotifyRange")
+                .addParameter(sectionArrayList, "sections")
+                .addStatement("this.sections.addAll(sections)")
+                .addStatement("notifyItemRangeChanged(getItemCount()-sections.size() , sections.size())")
+                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(Modifier.SYNCHRONIZED)
+                .build());
+
+
 
         adapterClass.addMethod(MethodSpec.methodBuilder("setSection")
+                .addParameter(sectionClassName, "section")
+                .addParameter(TypeName.INT, "position")
+                .addStatement("this.sections.set(position, section)")
+                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(Modifier.SYNCHRONIZED)
+                .build());
+        adapterClass.addMethod(MethodSpec.methodBuilder("setSectionAndNotify")
                 .addParameter(sectionClassName, "section")
                 .addParameter(TypeName.INT, "position")
                 .addStatement("this.sections.set(position, section)")
@@ -297,7 +334,16 @@ public class GenericAdapterProcessor extends AbstractProcessor {
                 .addModifiers(Modifier.SYNCHRONIZED)
                 .build());
 
+
+
         adapterClass.addMethod(MethodSpec.methodBuilder("addSection")
+                .addParameter(sectionClassName, "section")
+                .addParameter(TypeName.INT, "position")
+                .addStatement("this.sections.add(position, section)")
+                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(Modifier.SYNCHRONIZED)
+                .build());
+        adapterClass.addMethod(MethodSpec.methodBuilder("addSectionAndNotify")
                 .addParameter(sectionClassName, "section")
                 .addParameter(TypeName.INT, "position")
                 .addStatement("this.sections.add(position, section)")
@@ -306,7 +352,15 @@ public class GenericAdapterProcessor extends AbstractProcessor {
                 .addModifiers(Modifier.SYNCHRONIZED)
                 .build());
 
+
+
         adapterClass.addMethod(MethodSpec.methodBuilder("addSection")
+                .addParameter(sectionClassName, "section")
+                .addStatement("this.sections.add(section)")
+                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(Modifier.SYNCHRONIZED)
+                .build());
+        adapterClass.addMethod(MethodSpec.methodBuilder("addSectionAndNotify")
                 .addParameter(sectionClassName, "section")
                 .addStatement("this.sections.add(section)")
                 .addStatement("notifyItemInserted(sections.size() - 1)")
@@ -318,10 +372,17 @@ public class GenericAdapterProcessor extends AbstractProcessor {
 
         adapterClass.addMethod(MethodSpec.methodBuilder("clearData")
                 .addStatement("sections.clear()")
+                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(Modifier.SYNCHRONIZED)
+                .build());
+        adapterClass.addMethod(MethodSpec.methodBuilder("clearDataAndNotify")
+                .addStatement("sections.clear()")
                 .addStatement("notifyDataSetChanged()")
                 .addModifiers(Modifier.PUBLIC)
                 .addModifiers(Modifier.SYNCHRONIZED)
                 .build());
+
+
 
         adapterClass.addMethod(MethodSpec.methodBuilder("clearSectionsWithType")
                 .addParameter(sectionTypeClassName, "st")
@@ -332,6 +393,12 @@ public class GenericAdapterProcessor extends AbstractProcessor {
                     .endControlFlow()
                 .endControlFlow()
                 .addStatement("sections = newSections")
+                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(Modifier.SYNCHRONIZED)
+                .build());
+        adapterClass.addMethod(MethodSpec.methodBuilder("clearSectionsWithTypeAndNotify")
+                .addParameter(sectionTypeClassName, "st")
+                .addStatement("clearSectionsWithType(st)")
                 .addStatement("notifyDataSetChanged()")
                 .addModifiers(Modifier.PUBLIC)
                 .addModifiers(Modifier.SYNCHRONIZED)
